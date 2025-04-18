@@ -23,7 +23,7 @@ npm install web-streams-utils
 ### ESM (ECMAScript Modules)
 
 ```typescript
-import { fromIterable, map, filter, toArray } from 'stream-utils'
+import { fromIterable, map, filter, toArray } from 'web-streams-utils'
 
 async function example() {
   const inputData = [1, 2, 3, 4, 5]
@@ -42,7 +42,7 @@ example()
 ### CommonJS
 
 ```javascript
-const { fromIterable, map, filter, toArray } = require('stream-utils')
+const { fromIterable, map, filter, toArray } = require('web-streams-utils')
 
 async function example() {
   const inputData = [1, 2, 3, 4, 5]
@@ -63,8 +63,7 @@ example()
 ### Transformation Functions
 
 - `map<T, R>(fn: (chunk: T) => R | Promise<R>): TransformStream<T, R>`
--
-`filter<T>(predicate: (chunk: T) => boolean | Promise<boolean>): TransformStream<T, T>`
+- `filter<T>(predicate: (chunk: T) => boolean | Promise<boolean>): TransformStream<T, T>`
 - `tap<T>(fn: (chunk: T) => void | Promise<void>): TransformStream<T, T>`
 - `batch<T>(size: number): TransformStream<T, T[]>`
 - `flatten<T>(): TransformStream<T[], T>`
