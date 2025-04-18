@@ -8,7 +8,7 @@ type SyncOrAsync<T> = T | Promise<T>
  * @returns A TransformStream that applies the transformation
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(map(x => x * 2));
+ * const stream = readable.pipeThrough(map(x => x * 2));
  * ```
  */
 export function map<T, R>(
@@ -22,6 +22,29 @@ export function map<T, R>(
 }
 
 /**
+ * Map and flatten stream chunks
+ *
+ * @category Transformation
+ * @param fn - The transformation function that returns an array
+ * @returns A TransformStream that applies the transformation and flattens the result
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(flatMap(word => word.split(''));
+ * ```
+ */
+export function flatMap<T, R>(
+  fn: (chunk: T) => SyncOrAsync<R[]>
+): TransformStream<T, R> {
+  const mapper = map<T, R[]>(fn)
+  const flattener = flatten<R>()
+  mapper.readable.pipeThrough(flattener)
+  return {
+    readable: flattener.readable,
+    writable: mapper.writable
+  }
+}
+
+/**
  * Filter function for filtering stream chunks
  *
  * @category Transformation
@@ -29,7 +52,7 @@ export function map<T, R>(
  * @returns A TransformStream that only passes chunks that satisfy the predicate
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(filter(x => x > 10));
+ * const stream = readable.pipeThrough(filter(x => x > 10));
  * ```
  */
 export function filter<T>(
@@ -52,7 +75,7 @@ export function filter<T>(
  * @returns A TransformStream that passes chunks unchanged after executing the function
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(tap(x => console.log(`Processing: ${x}`)));
+ * const stream = readable.pipeThrough(tap(x => console.log(`Processing: ${x}`)));
  * ```
  */
 export function tap<T>(
@@ -74,7 +97,7 @@ export function tap<T>(
  * @returns A promise that resolves to an array of all chunks
  * @example
  * ```ts
- * const result = await toArray(sourceStream);
+ * const result = await toArray(readable);
  * console.log(result); // [1, 2, 3, ...]
  * ```
  */
@@ -98,8 +121,8 @@ export async function toArray<T>(stream: ReadableStream<T>): Promise<T[]> {
  * @returns A TransformStream that groups chunks into batches
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(batch(3));
- * // If sourceStream emits [1, 2, 3, 4, 5], the result will be [[1, 2, 3], [4, 5]]
+ * const stream = readable.pipeThrough(batch(3));
+ * // If readable emits [1, 2, 3, 4, 5], the result will be [[1, 2, 3], [4, 5]]
  * ```
  */
 export function batch<T>(size: number): TransformStream<T, T[]> {
@@ -129,8 +152,8 @@ export function batch<T>(size: number): TransformStream<T, T[]> {
  * @returns A TransformStream that flattens arrays into individual chunks
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(flatten());
- * // If sourceStream emits [[1, 2], [3, 4]], the result will be [1, 2, 3, 4]
+ * const stream = readable.pipeThrough(flatten());
+ * // If readable emits [[1, 2], [3, 4]], the result will be [1, 2, 3, 4]
  * ```
  */
 export function flatten<T>(): TransformStream<T[], T> {
@@ -151,7 +174,7 @@ export function flatten<T>(): TransformStream<T[], T> {
  * @returns A TransformStream that limits the number of chunks
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(take(3));
+ * const stream = readable.pipeThrough(take(3));
  * // Only the first 3 chunks will pass through
  * ```
  */
@@ -181,7 +204,7 @@ export function take<T>(limit: number): TransformStream<T, T> {
  * @returns A TransformStream that skips the specified number of chunks
  * @example
  * ```ts
- * const stream = sourceStream.pipeThrough(skip(2));
+ * const stream = readable.pipeThrough(skip(2));
  * // The first 2 chunks will be skipped
  * ```
  */

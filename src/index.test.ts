@@ -11,7 +11,8 @@ import {
   skip,
   merge,
   fromIterable,
-  interval
+  interval,
+  flatMap
 } from '.'
 
 describe('Stream Utils', () => {
@@ -35,6 +36,44 @@ describe('Stream Utils', () => {
       )
       const actual = await toArray(stream)
       expect(actual).toStrictEqual([2, 4, 6])
+    })
+  })
+
+  describe('flatMap', () => {
+    it('should transform and flatten chunks', async () => {
+      const stream = fromIterable(['hello', 'world']).pipeThrough(
+        flatMap(str => str.split(''))
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([
+        'h',
+        'e',
+        'l',
+        'l',
+        'o',
+        'w',
+        'o',
+        'r',
+        'l',
+        'd'
+      ])
+    })
+
+    it('should handle async transformations', async () => {
+      const stream = fromIterable(['a', 'b']).pipeThrough(
+        flatMap(async str => {
+          await delay(10)
+          return [str, str.toUpperCase()]
+        })
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual(['a', 'A', 'b', 'B'])
+    })
+
+    it('should handle empty arrays', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(flatMap(() => []))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
     })
   })
 
