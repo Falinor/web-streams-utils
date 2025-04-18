@@ -1,0 +1,19 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "Stream Utils",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "readme": "README.md",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Stream Creation",
+    "Transformation",
+    "Consumption",
+    "Combination",
+    "*"
+  ]
+}
