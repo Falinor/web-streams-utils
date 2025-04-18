@@ -1,12 +1,12 @@
-# Stream Utils
+# Web streams utils
 
-A TypeScript library providing utility functions for working with Web Streams
+A TypeScript library providing utility functions for working with the Web Stream
 API.
 
 ## Installation
 
 ```bash
-npm install stream-utils
+npm install web-streams-utils
 ```
 
 ## Features
@@ -92,7 +92,7 @@ TypeDoc.
 To generate the documentation:
 
 ```bash
-npm run docs
+yarn docs
 ```
 
 The documentation will be available in the `docs/` directory.
@@ -117,7 +117,7 @@ yarn run test:coverage
 ### Formatting
 
 ```bash
-npm run format
+yarn format
 ```
 
 ### Committing Changes
@@ -126,7 +126,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/)
 for commit messages. You can use the following command to create a commit:
 
 ```bash
-npm run commit
+yarn commit
 ```
 
 ### Releasing
