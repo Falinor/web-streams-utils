@@ -13,7 +13,9 @@ import {
   fromIterable,
   interval,
   flatMap,
-  compact
+  compact,
+  scan,
+  reduce
 } from '.'
 
 describe('Stream Utils', () => {
@@ -358,6 +360,86 @@ describe('Stream Utils', () => {
       const actual = await toArray(stream)
       expect(actual).toStrictEqual([[9, 36], [81]])
       expect(tapped).toStrictEqual([3, 6, 9])
+    })
+  })
+
+  describe('reduce', () => {
+    it('should reduce stream to a single value', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
+        reduce((a, b) => a + b)
+      )
+      const [sum] = await toArray(stream)
+      expect(sum).toBe(15)
+    })
+
+    it('should handle async reducer functions', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(
+        reduce(async (a, b) => {
+          await delay(10)
+          return a + b
+        })
+      )
+      const [sum] = await toArray(stream)
+      expect(sum).toBe(6)
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable<number>([]).pipeThrough(
+        reduce((a, b) => a + b)
+      )
+      const result = await toArray(stream)
+      expect(result).toStrictEqual([])
+    })
+
+    it('should handle single value streams', async () => {
+      const stream = fromIterable([42]).pipeThrough(reduce((a, b) => a + b))
+      const [result] = await toArray(stream)
+      expect(result).toBe(42)
+    })
+  })
+
+  describe('scan', () => {
+    it('should produce stream of accumulated values', async () => {
+      const stream = fromIterable([1, 2, 3, 4]).pipeThrough(
+        scan((acc, x) => acc + x, 0)
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 3, 6, 10])
+    })
+
+    it('should handle async scanner functions', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(
+        scan(async (acc, x) => {
+          await delay(10)
+          return acc + x
+        }, 0)
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 3, 6])
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable<number>([]).pipeThrough(
+        scan((acc, x) => acc + x, 0)
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+
+    it('should handle single value streams', async () => {
+      const stream = fromIterable([42]).pipeThrough(
+        scan((acc, x) => acc + x, 0)
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([42])
+    })
+
+    it('should work with different types for accumulator and input', async () => {
+      const stream = fromIterable(['a', 'b', 'c']).pipeThrough(
+        scan((acc, x) => acc + x.length, 0)
+      )
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
     })
   })
 })

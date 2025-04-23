@@ -345,3 +345,64 @@ export function interval(period: number): ReadableStream<number> {
     }
   })
 }
+
+/**
+ * Create a TransformStream that reduces all values to a single value
+ *
+ * @category Transformation
+ * @param reducer - The reducer function to apply to each chunk
+ * @returns A TransformStream that emits the final reduced value when the stream closes
+ * @example
+ * ```ts
+ * // Sum all numbers in a stream
+ * const stream = readable.pipeThrough(reduce((a, b) => a + b));
+ * const [sum] = await toArray(stream); // Gets the single reduced value
+ * ```
+ */
+export function reduce<T>(
+  reducer: (accumulator: T, chunk: T) => SyncOrAsync<T>
+): TransformStream<T, T> {
+  let accumulator: T | undefined
+
+  return new TransformStream<T, T>({
+    async transform(chunk: T, controller: TransformStreamDefaultController<T>) {
+      if (accumulator === undefined) {
+        accumulator = chunk
+      } else {
+        accumulator = await reducer(accumulator, chunk)
+      }
+    },
+    flush(controller: TransformStreamDefaultController<T>) {
+      if (accumulator !== undefined) {
+        controller.enqueue(accumulator)
+      }
+    }
+  })
+}
+
+/**
+ * Create a TransformStream that produces a stream of accumulated values
+ *
+ * @category Transformation
+ * @param scanner - The scanner function to apply to each chunk
+ * @param initialValue - The initial value for the scan
+ * @returns A TransformStream that emits each intermediate accumulated value
+ * @example
+ * ```ts
+ * // Calculate running sum
+ * const stream = readable.pipeThrough(scan((acc, x) => acc + x, 0));
+ * // If readable emits [1, 2, 3], the result will be [1, 3, 6]
+ * ```
+ */
+export function scan<T, R>(
+  scanner: (accumulator: R, chunk: T) => SyncOrAsync<R>,
+  initialValue: R
+): TransformStream<T, R> {
+  let accumulator = initialValue
+  return new TransformStream<T, R>({
+    async transform(chunk: T, controller: TransformStreamDefaultController<R>) {
+      accumulator = await scanner(accumulator, chunk)
+      controller.enqueue(accumulator)
+    }
+  })
+}
