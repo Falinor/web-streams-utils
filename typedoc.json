@@ -1,19 +1,21 @@
 {
+  "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["src/index.ts"],
   "out": "docs",
-  "name": "Stream Utils",
-  "includeVersion": true,
+  "name": "Web streams utils",
   "excludePrivate": true,
+  "excludeProtected": true,
   "excludeExternals": true,
-  "readme": "README.md",
-  "plugin": ["typedoc-plugin-markdown"],
-  "theme": "default",
+  "includeVersion": true,
   "categorizeByGroup": true,
   "categoryOrder": [
-    "Stream Creation",
+    "Stream creation",
     "Transformation",
     "Consumption",
     "Combination",
     "*"
-  ]
+  ],
+  "navigationLinks": {
+    "GitHub": "https://github.com/falinor/web-streams-utils"
+  }
 }
