@@ -12,13 +12,46 @@ import {
   merge,
   fromIterable,
   interval,
-  flatMap
+  flatMap,
+  compact
 } from '.'
 
 describe('Stream Utils', () => {
   async function delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
+
+  describe('compact', () => {
+    it('should filter out falsy values', async () => {
+      const stream = fromIterable([
+        1,
+        undefined,
+        2,
+        null,
+        3,
+        null,
+        undefined
+      ]).pipeThrough(compact())
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle async streams', async () => {
+      const stream = fromIterable([
+        Promise.resolve(1),
+        Promise.resolve(null),
+        Promise.resolve(2)
+      ]).pipeThrough(compact())
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2])
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable([]).pipeThrough(compact())
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+  })
 
   describe('map', () => {
     it('should transform each chunk', async () => {

@@ -1,6 +1,35 @@
 type SyncOrAsync<T> = T | Promise<T>
 
 /**
+ * Remove null and undefined values from a stream
+ *
+ * @category Transformation
+ * @returns A TransformStream that filters out null and undefined values
+ * @example
+ * ```ts
+ * const readable = new ReadableStream({
+ *   start(controller) {
+ *     const items = [1, null, 2, undefined, 3]
+ *     items.forEach(item => {
+ *       controller.enqueue(item)
+ *     })
+ *   }
+ * })
+ * const stream = readable.pipeThrough(compact());
+ * // If readable emits [1, null, 2, undefined, 3], the result will be [1, 2, 3]
+ * ```
+ */
+export function compact<T>(): TransformStream<T, NonNullable<T>> {
+  return new TransformStream({
+    async transform(chunk, controller) {
+      if (chunk !== null && chunk !== undefined) {
+        controller.enqueue(chunk)
+      }
+    }
+  })
+}
+
+/**
  * Map function for transforming stream chunks
  *
  * @category Transformation
