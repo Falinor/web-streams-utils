@@ -69,6 +69,10 @@ example()
 - `flatten<T>(): TransformStream<T[], T>`
 - `take<T>(limit: number): TransformStream<T, T>`
 - `skip<T>(count: number): TransformStream<T, T>`
+- `scan<T, R>(scanner: (accumulator: R, chunk: T) => R | Promise<R>, initialValue: R): TransformStream<T, R>`
+- `compact<T>(): TransformStream<T, NonNullable<T>>`
+- `flatMap<T, R>(fn: (chunk: T) => R[] | Promise<R[]>): TransformStream<T, R>`
+- `reduce<T>(reducer: (accumulator: T, chunk: T) => T | Promise<T>): TransformStream<T, T>`
 
 ### Stream Creation
 
@@ -85,10 +89,9 @@ example()
 
 ## Documentation
 
-A complete documentation is automatically generated from the source code using
-TypeDoc.
+The complete API documentation is available at [https://falinor.github.io/web-streams-utils/](https://falinor.github.io/web-streams-utils/).
 
-To generate the documentation:
+You can also generate the documentation locally:
 
 ```bash
 yarn docs
@@ -101,8 +104,8 @@ The documentation will be available in the `docs/` directory.
 ### Setup
 
 ```bash
+corepack enable
 yarn install
-yarn prepare
 ```
 
 ### Testing
@@ -110,7 +113,7 @@ yarn prepare
 ```bash
 yarn test
 yarn test:watch
-yarn run test:coverage
+yarn test:coverage
 ```
 
 ### Formatting
@@ -139,6 +142,7 @@ GitHub Actions when changes are pushed to the main branch. The workflow will:
 3. Update the CHANGELOG.md
 4. Publish to npm
 5. Create a GitHub release
+6. Deploy documentation to GitHub Pages
 
 The release process requires the following GitHub secrets to be set:
 
