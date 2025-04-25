@@ -317,7 +317,7 @@ describe('Stream Utils', () => {
     })
 
     afterEach(() => {
-      vi.restoreAllMocks()
+      vi.useRealTimers()
     })
 
     it('should emit values at specified intervals', async () => {
@@ -366,7 +366,7 @@ describe('Stream Utils', () => {
   describe('reduce', () => {
     it('should reduce stream to a single value', async () => {
       const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
-        reduce((a, b) => a + b)
+        reduce((a, b) => a + b, 0)
       )
       const [sum] = await toArray(stream)
       expect(sum).toBe(15)
@@ -377,7 +377,7 @@ describe('Stream Utils', () => {
         reduce(async (a, b) => {
           await delay(10)
           return a + b
-        })
+        }, 0)
       )
       const [sum] = await toArray(stream)
       expect(sum).toBe(6)
@@ -385,14 +385,14 @@ describe('Stream Utils', () => {
 
     it('should handle empty streams', async () => {
       const stream = fromIterable<number>([]).pipeThrough(
-        reduce((a, b) => a + b)
+        reduce((a, b) => a + b, 0)
       )
       const result = await toArray(stream)
       expect(result).toStrictEqual([])
     })
 
     it('should handle single value streams', async () => {
-      const stream = fromIterable([42]).pipeThrough(reduce((a, b) => a + b))
+      const stream = fromIterable([42]).pipeThrough(reduce((a, b) => a + b, 0))
       const [result] = await toArray(stream)
       expect(result).toBe(42)
     })

@@ -351,6 +351,7 @@ export function interval(period: number): ReadableStream<number> {
  *
  * @category Transformation
  * @param reducer - The reducer function to apply to each chunk
+ * @param initialValue - The initial value
  * @returns A TransformStream that emits the final reduced value when the stream closes
  * @example
  * ```ts
@@ -359,20 +360,17 @@ export function interval(period: number): ReadableStream<number> {
  * const [sum] = await toArray(stream); // Gets the single reduced value
  * ```
  */
-export function reduce<T>(
-  reducer: (accumulator: T, chunk: T) => SyncOrAsync<T>
-): TransformStream<T, T> {
-  let accumulator: T | undefined
+export function reduce<T, R>(
+  reducer: (accumulator: R, chunk: T) => SyncOrAsync<R>,
+  initialValue: R
+): TransformStream<T, R> {
+  let accumulator: R | undefined
 
-  return new TransformStream<T, T>({
-    async transform(chunk: T, controller: TransformStreamDefaultController<T>) {
-      if (accumulator === undefined) {
-        accumulator = chunk
-      } else {
-        accumulator = await reducer(accumulator, chunk)
-      }
+  return new TransformStream<T, R>({
+    async transform(chunk) {
+      accumulator = await reducer(accumulator ?? initialValue, chunk)
     },
-    flush(controller: TransformStreamDefaultController<T>) {
+    flush(controller) {
       if (accumulator !== undefined) {
         controller.enqueue(accumulator)
       }
@@ -400,7 +398,7 @@ export function scan<T, R>(
 ): TransformStream<T, R> {
   let accumulator = initialValue
   return new TransformStream<T, R>({
-    async transform(chunk: T, controller: TransformStreamDefaultController<R>) {
+    async transform(chunk, controller) {
       accumulator = await scanner(accumulator, chunk)
       controller.enqueue(accumulator)
     }
