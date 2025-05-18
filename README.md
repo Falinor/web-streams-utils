@@ -62,6 +62,7 @@ example()
 
 ### Transformation Functions
 
+- `append<T>(...items: T[]): TransformStream<T, T>`
 - `map<T, R>(fn: (chunk: T) => R | Promise<R>): TransformStream<T, R>`
 - `filter<T>(predicate: (chunk: T) => boolean | Promise<boolean>): TransformStream<T, T>`
 - `tap<T>(fn: (chunk: T) => void | Promise<void>): TransformStream<T, T>`
