@@ -1,3 +1,20 @@
+# [1.0.0](https://github.com/Falinor/web-streams-utils/compare/v0.3.0...v1.0.0) (2025-05-18)
+
+
+### Documentation
+
+* add documentation for `append` ([469d878](https://github.com/Falinor/web-streams-utils/commit/469d878cbc7f0e705f2dd07dbfce9f86f1b80cb2))
+
+
+### Features
+
+* add `append` ([e26ca2a](https://github.com/Falinor/web-streams-utils/commit/e26ca2a529d00610a2271fe665bb7d38ef69cd4c))
+
+
+### BREAKING CHANGES
+
+* Release a stable v1
+
 # [0.3.0](https://github.com/Falinor/web-streams-utils/compare/v0.2.0...v0.3.0) (2025-04-25)
 
 
