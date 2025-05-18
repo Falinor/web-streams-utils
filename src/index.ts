@@ -1,6 +1,28 @@
 type SyncOrAsync<T> = T | Promise<T>
 
 /**
+ * Append items to a stream
+ *
+ * @category Transformation
+ * @param items - The items to append to the stream
+ * @returns A TransformStream that appends the items to the end of the stream
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(append(4, 5, 6));
+ * // If readable emits [1, 2, 3], the result will be [1, 2, 3, 4, 5, 6]
+ * ```
+ */
+export function append<T>(...items: T[]): TransformStream<T, T> {
+  return new TransformStream({
+    flush(controller) {
+      items.forEach(item => {
+        controller.enqueue(item)
+      })
+    }
+  })
+}
+
+/**
  * Remove null and undefined values from a stream
  *
  * @category Transformation

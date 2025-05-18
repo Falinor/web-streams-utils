@@ -15,13 +15,28 @@ import {
   flatMap,
   compact,
   scan,
-  reduce
+  reduce,
+  append
 } from '.'
 
 describe('Stream Utils', () => {
   async function delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
+
+  describe('append', () => {
+    it('should append a value to the stream', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(append(4))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3, 4])
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable([]).pipeThrough(append(1))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1])
+    })
+  })
 
   describe('compact', () => {
     it('should filter out falsy values', async () => {
