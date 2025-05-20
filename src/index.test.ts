@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import {
-  map,
-  filter,
-  tap,
-  toArray,
+  append,
   batch,
+  compact,
+  filter,
+  flatMap,
   flatten,
-  take,
-  skip,
-  merge,
   fromIterable,
   interval,
-  flatMap,
-  compact,
-  scan,
+  map,
+  merge,
   reduce,
-  append
+  scan,
+  skip,
+  take,
+  tap,
+  toArray
 } from '.'
 
 describe('Stream Utils', () => {
@@ -35,6 +35,26 @@ describe('Stream Utils', () => {
       const stream = fromIterable([]).pipeThrough(append(1))
       const actual = await toArray(stream)
       expect(actual).toStrictEqual([1])
+    })
+  })
+
+  describe('batch', () => {
+    it('should batch chunks into arrays of specified size', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(batch(2))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([[1, 2], [3, 4], [5]])
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable([]).pipeThrough(batch(2))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+
+    it('should handle batch size larger than stream length', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(batch(5))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([[1, 2, 3]])
     })
   })
 
@@ -70,22 +90,24 @@ describe('Stream Utils', () => {
     })
   })
 
-  describe('map', () => {
-    it('should transform each chunk', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(map(n => n * 2))
+  describe('filter', () => {
+    it('should filter chunks based on predicate', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
+        filter(n => n % 2 === 0)
+      )
       const actual = await toArray(stream)
-      expect(actual).toStrictEqual([2, 4, 6])
+      expect(actual).toStrictEqual([2, 4])
     })
 
-    it('should handle async transformations', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(
-        map(async n => {
+    it('should handle async predicates', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
+        filter(async n => {
           await delay(10)
-          return n * 2
+          return n % 2 === 0
         })
       )
       const actual = await toArray(stream)
-      expect(actual).toStrictEqual([2, 4, 6])
+      expect(actual).toStrictEqual([2, 4])
     })
   })
 
@@ -127,90 +149,6 @@ describe('Stream Utils', () => {
     })
   })
 
-  describe('filter', () => {
-    it('should filter chunks based on predicate', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
-        filter(n => n % 2 === 0)
-      )
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([2, 4])
-    })
-
-    it('should handle async predicates', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(
-        filter(async n => {
-          await delay(10)
-          return n % 2 === 0
-        })
-      )
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([2, 4])
-    })
-  })
-
-  describe('tap', () => {
-    it('should execute side effect without modifying chunks', async () => {
-      const tapped: number[] = []
-      const stream = fromIterable([1, 2, 3]).pipeThrough(
-        tap(n => {
-          tapped.push(n)
-        })
-      )
-      const actual = await toArray(stream)
-
-      expect(actual).toStrictEqual([1, 2, 3])
-      expect(tapped).toStrictEqual([1, 2, 3])
-    })
-
-    it('should handle async side effects', async () => {
-      const tapped: number[] = []
-      const stream = fromIterable([1, 2, 3]).pipeThrough(
-        tap(async n => {
-          await delay(10)
-          tapped.push(n)
-        })
-      )
-      const actual = await toArray(stream)
-
-      expect(actual).toStrictEqual([1, 2, 3])
-      expect(tapped).toStrictEqual([1, 2, 3])
-    })
-  })
-
-  describe('toArray', () => {
-    it('should collect all chunks into an array', async () => {
-      const stream = fromIterable([1, 2, 3])
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([1, 2, 3])
-    })
-
-    it('should handle empty streams', async () => {
-      const stream = fromIterable([])
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([])
-    })
-  })
-
-  describe('batch', () => {
-    it('should batch chunks into arrays of specified size', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(batch(2))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([[1, 2], [3, 4], [5]])
-    })
-
-    it('should handle empty streams', async () => {
-      const stream = fromIterable([]).pipeThrough(batch(2))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([])
-    })
-
-    it('should handle batch size larger than stream length', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(batch(5))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([[1, 2, 3]])
-    })
-  })
-
   describe('flatten', () => {
     it('should flatten arrays into individual chunks', async () => {
       const stream = fromIterable([[1, 2], [3, 4], [5]]).pipeThrough(flatten())
@@ -227,75 +165,6 @@ describe('Stream Utils', () => {
     it('should handle empty streams', async () => {
       const stream = fromIterable([]).pipeThrough(flatten())
       const actual = await toArray(stream)
-      expect(actual).toStrictEqual([])
-    })
-  })
-
-  describe('take', () => {
-    it('should limit the number of chunks', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(take(3))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([1, 2, 3])
-    })
-
-    it('should handle limit larger than stream length', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(take(5))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([1, 2, 3])
-    })
-
-    it('should handle limit of zero', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(take(0))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([])
-    })
-  })
-
-  describe('skip', () => {
-    it('should skip the specified number of chunks', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(skip(2))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([3, 4, 5])
-    })
-
-    it('should handle skip count larger than stream length', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(skip(5))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([])
-    })
-
-    it('should handle skip count of zero', async () => {
-      const stream = fromIterable([1, 2, 3]).pipeThrough(skip(0))
-      const actual = await toArray(stream)
-      expect(actual).toStrictEqual([1, 2, 3])
-    })
-  })
-
-  describe('merge', () => {
-    it('should merge multiple streams', async () => {
-      const stream1 = fromIterable([1, 2, 3])
-      const stream2 = fromIterable([4, 5, 6])
-      const merged = merge(stream1, stream2)
-      const actual = await toArray(merged)
-
-      // Since merge doesn't guarantee order, we just check that all items are present
-      expect(actual).toHaveLength(6)
-      expect(actual).toStrictEqual(expect.arrayContaining([1, 2, 3, 4, 5, 6]))
-    })
-
-    it('should handle empty streams', async () => {
-      const stream1 = fromIterable([])
-      const stream2 = fromIterable([1, 2, 3])
-      const merged = merge(stream1, stream2)
-      const actual = await toArray(merged)
-      expect(actual).toStrictEqual([1, 2, 3])
-    })
-
-    it('should handle all empty streams', async () => {
-      const stream1 = fromIterable([])
-      const stream2 = fromIterable([])
-      const merged = merge(stream1, stream2)
-      const actual = await toArray(merged)
       expect(actual).toStrictEqual([])
     })
   })
@@ -348,33 +217,51 @@ describe('Stream Utils', () => {
     })
   })
 
-  describe('Composition', () => {
-    it('should support chaining multiple operations', async () => {
-      const stream = fromIterable([1, 2, 3, 4, 5, 6])
-        .pipeThrough(filter(n => n % 2 === 0))
-        .pipeThrough(map(n => n * 10))
-        .pipeThrough(take(2))
-
+  describe('map', () => {
+    it('should transform each chunk', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(map(n => n * 2))
       const actual = await toArray(stream)
-      expect(actual).toStrictEqual([20, 40])
+      expect(actual).toStrictEqual([2, 4, 6])
     })
 
-    it('should support complex transformations', async () => {
-      const tapped: number[] = []
-
-      const stream = fromIterable([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        .pipeThrough(filter(n => n % 3 === 0))
-        .pipeThrough(
-          tap(n => {
-            tapped.push(n)
-          })
-        )
-        .pipeThrough(map(n => n * n))
-        .pipeThrough(batch(2))
-
+    it('should handle async transformations', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(
+        map(async n => {
+          await delay(10)
+          return n * 2
+        })
+      )
       const actual = await toArray(stream)
-      expect(actual).toStrictEqual([[9, 36], [81]])
-      expect(tapped).toStrictEqual([3, 6, 9])
+      expect(actual).toStrictEqual([2, 4, 6])
+    })
+  })
+
+  describe('merge', () => {
+    it('should merge multiple streams', async () => {
+      const stream1 = fromIterable([1, 2, 3])
+      const stream2 = fromIterable([4, 5, 6])
+      const merged = merge(stream1, stream2)
+      const actual = await toArray(merged)
+
+      // Since merge doesn't guarantee order, we just check that all items are present
+      expect(actual).toHaveLength(6)
+      expect(actual).toStrictEqual(expect.arrayContaining([1, 2, 3, 4, 5, 6]))
+    })
+
+    it('should handle empty streams', async () => {
+      const stream1 = fromIterable([])
+      const stream2 = fromIterable([1, 2, 3])
+      const merged = merge(stream1, stream2)
+      const actual = await toArray(merged)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle all empty streams', async () => {
+      const stream1 = fromIterable([])
+      const stream2 = fromIterable([])
+      const merged = merge(stream1, stream2)
+      const actual = await toArray(merged)
+      expect(actual).toStrictEqual([])
     })
   })
 
@@ -455,6 +342,119 @@ describe('Stream Utils', () => {
       )
       const actual = await toArray(stream)
       expect(actual).toStrictEqual([1, 2, 3])
+    })
+  })
+
+  describe('skip', () => {
+    it('should skip the specified number of chunks', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(skip(2))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([3, 4, 5])
+    })
+
+    it('should handle skip count larger than stream length', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(skip(5))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+
+    it('should handle skip count of zero', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(skip(0))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+  })
+
+  describe('take', () => {
+    it('should limit the number of chunks', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5]).pipeThrough(take(3))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle limit larger than stream length', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(take(5))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle limit of zero', async () => {
+      const stream = fromIterable([1, 2, 3]).pipeThrough(take(0))
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+  })
+
+  describe('tap', () => {
+    it('should execute side effect without modifying chunks', async () => {
+      const tapped: number[] = []
+      const stream = fromIterable([1, 2, 3]).pipeThrough(
+        tap(n => {
+          tapped.push(n)
+        })
+      )
+      const actual = await toArray(stream)
+
+      expect(actual).toStrictEqual([1, 2, 3])
+      expect(tapped).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle async side effects', async () => {
+      const tapped: number[] = []
+      const stream = fromIterable([1, 2, 3]).pipeThrough(
+        tap(async n => {
+          await delay(10)
+          tapped.push(n)
+        })
+      )
+      const actual = await toArray(stream)
+
+      expect(actual).toStrictEqual([1, 2, 3])
+      expect(tapped).toStrictEqual([1, 2, 3])
+    })
+  })
+
+  describe('toArray', () => {
+    it('should collect all chunks into an array', async () => {
+      const stream = fromIterable([1, 2, 3])
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([1, 2, 3])
+    })
+
+    it('should handle empty streams', async () => {
+      const stream = fromIterable([])
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([])
+    })
+  })
+
+  describe('Composition', () => {
+    it('should support chaining multiple operations', async () => {
+      const stream = fromIterable([1, 2, 3, 4, 5, 6])
+        .pipeThrough(filter(n => n % 2 === 0))
+        .pipeThrough(map(n => n * 10))
+        .pipeThrough(take(2))
+
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([20, 40])
+    })
+
+    it('should support complex transformations', async () => {
+      const tapped: number[] = []
+
+      const stream = fromIterable([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        .pipeThrough(filter(n => n % 3 === 0))
+        .pipeThrough(
+          tap(n => {
+            tapped.push(n)
+          })
+        )
+        .pipeThrough(map(n => n * n))
+        .pipeThrough(batch(2))
+
+      const actual = await toArray(stream)
+      expect(actual).toStrictEqual([[9, 36], [81]])
+      expect(tapped).toStrictEqual([3, 6, 9])
     })
   })
 })

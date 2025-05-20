@@ -23,148 +23,6 @@ export function append<T>(...items: T[]): TransformStream<T, T> {
 }
 
 /**
- * Remove null and undefined values from a stream
- *
- * @category Transformation
- * @returns A TransformStream that filters out null and undefined values
- * @example
- * ```ts
- * const readable = new ReadableStream({
- *   start(controller) {
- *     const items = [1, null, 2, undefined, 3]
- *     items.forEach(item => {
- *       controller.enqueue(item)
- *     })
- *   }
- * })
- * const stream = readable.pipeThrough(compact());
- * // If readable emits [1, null, 2, undefined, 3], the result will be [1, 2, 3]
- * ```
- */
-export function compact<T>(): TransformStream<T, NonNullable<T>> {
-  return new TransformStream({
-    async transform(chunk, controller) {
-      if (chunk !== null && chunk !== undefined) {
-        controller.enqueue(chunk)
-      }
-    }
-  })
-}
-
-/**
- * Map function for transforming stream chunks
- *
- * @category Transformation
- * @param fn - The transformation function to apply to each chunk
- * @returns A TransformStream that applies the transformation
- * @example
- * ```ts
- * const stream = readable.pipeThrough(map(x => x * 2));
- * ```
- */
-export function map<T, R>(
-  fn: (chunk: T) => SyncOrAsync<R>
-): TransformStream<T, R> {
-  return new TransformStream({
-    async transform(chunk, controller) {
-      controller.enqueue(await fn(chunk))
-    }
-  })
-}
-
-/**
- * Map and flatten stream chunks
- *
- * @category Transformation
- * @param fn - The transformation function that returns an array
- * @returns A TransformStream that applies the transformation and flattens the result
- * @example
- * ```ts
- * const stream = readable.pipeThrough(flatMap(word => word.split(''));
- * ```
- */
-export function flatMap<T, R>(
-  fn: (chunk: T) => SyncOrAsync<R[]>
-): TransformStream<T, R> {
-  const mapper = map<T, R[]>(fn)
-  const flattener = flatten<R>()
-  mapper.readable.pipeThrough(flattener)
-  return {
-    readable: flattener.readable,
-    writable: mapper.writable
-  }
-}
-
-/**
- * Filter function for filtering stream chunks
- *
- * @category Transformation
- * @param predicate - The predicate function to determine which chunks to keep
- * @returns A TransformStream that only passes chunks that satisfy the predicate
- * @example
- * ```ts
- * const stream = readable.pipeThrough(filter(x => x > 10));
- * ```
- */
-export function filter<T>(
-  predicate: (chunk: T) => SyncOrAsync<boolean>
-): TransformStream<T, T> {
-  return new TransformStream({
-    async transform(chunk, controller) {
-      if (await predicate(chunk)) {
-        controller.enqueue(chunk)
-      }
-    }
-  })
-}
-
-/**
- * Tap function for side effects without modifying the stream
- *
- * @category Transformation
- * @param fn - The function to execute for each chunk (for side effects)
- * @returns A TransformStream that passes chunks unchanged after executing the function
- * @example
- * ```ts
- * const stream = readable.pipeThrough(tap(x => console.log(`Processing: ${x}`)));
- * ```
- */
-export function tap<T>(
-  fn: (chunk: T) => SyncOrAsync<void>
-): TransformStream<T, T> {
-  return new TransformStream({
-    async transform(chunk, controller) {
-      await fn(chunk)
-      controller.enqueue(chunk)
-    }
-  })
-}
-
-/**
- * Collect all stream chunks into an array
- *
- * @category Consumption
- * @param stream - The readable stream to collect
- * @returns A promise that resolves to an array of all chunks
- * @example
- * ```ts
- * const result = await toArray(readable);
- * console.log(result); // [1, 2, 3, ...]
- * ```
- */
-export async function toArray<T>(stream: ReadableStream<T>): Promise<T[]> {
-  const array: T[] = []
-  await stream.pipeTo(
-    new WritableStream<T>({
-      write(chunk: T) {
-        array.push(chunk)
-      }
-    })
-  )
-  return array
-}
-
-/**
  * Batch chunks into arrays of specified size
  *
  * @category Transformation
@@ -197,6 +55,81 @@ export function batch<T>(size: number): TransformStream<T, T[]> {
 }
 
 /**
+ * Remove null and undefined values from a stream
+ *
+ * @category Transformation
+ * @returns A TransformStream that filters out null and undefined values
+ * @example
+ * ```ts
+ * const readable = new ReadableStream({
+ *   start(controller) {
+ *     const items = [1, null, 2, undefined, 3]
+ *     items.forEach(item => {
+ *       controller.enqueue(item)
+ *     })
+ *   }
+ * })
+ * const stream = readable.pipeThrough(compact());
+ * // If readable emits [1, null, 2, undefined, 3], the result will be [1, 2, 3]
+ * ```
+ */
+export function compact<T>(): TransformStream<T, NonNullable<T>> {
+  return new TransformStream({
+    async transform(chunk, controller) {
+      if (chunk !== null && chunk !== undefined) {
+        controller.enqueue(chunk)
+      }
+    }
+  })
+}
+
+/**
+ * Filter function for filtering stream chunks
+ *
+ * @category Transformation
+ * @param predicate - The predicate function to determine which chunks to keep
+ * @returns A TransformStream that only passes chunks that satisfy the predicate
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(filter(x => x > 10));
+ * ```
+ */
+export function filter<T>(
+  predicate: (chunk: T) => SyncOrAsync<boolean>
+): TransformStream<T, T> {
+  return new TransformStream({
+    async transform(chunk, controller) {
+      if (await predicate(chunk)) {
+        controller.enqueue(chunk)
+      }
+    }
+  })
+}
+
+/**
+ * Map and flatten stream chunks
+ *
+ * @category Transformation
+ * @param fn - The transformation function that returns an array
+ * @returns A TransformStream that applies the transformation and flattens the result
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(flatMap(word => word.split(''));
+ * ```
+ */
+export function flatMap<T, R>(
+  fn: (chunk: T) => SyncOrAsync<R[]>
+): TransformStream<T, R> {
+  const mapper = map<T, R[]>(fn)
+  const flattener = flatten<R>()
+  mapper.readable.pipeThrough(flattener)
+  return {
+    readable: flattener.readable,
+    writable: mapper.writable
+  }
+}
+
+/**
  * Flatten a stream of arrays into individual chunks
  *
  * @category Transformation
@@ -213,100 +146,6 @@ export function flatten<T>(): TransformStream<T[], T> {
       chunk.forEach(item => {
         controller.enqueue(item)
       })
-    }
-  })
-}
-
-/**
- * Limit the number of chunks from a stream
- *
- * @category Transformation
- * @param limit - The maximum number of chunks to pass through
- * @returns A TransformStream that limits the number of chunks
- * @example
- * ```ts
- * const stream = readable.pipeThrough(take(3));
- * // Only the first 3 chunks will pass through
- * ```
- */
-export function take<T>(limit: number): TransformStream<T, T> {
-  let count = 0
-
-  return new TransformStream({
-    transform(chunk, controller) {
-      if (count < limit) {
-        controller.enqueue(chunk)
-        count++
-      }
-
-      if (count >= limit) {
-        // Hmm not sure about that
-        controller.terminate()
-      }
-    }
-  })
-}
-
-/**
- * Skip a number of chunks from the beginning of a stream
- *
- * @category Transformation
- * @param count - The number of chunks to skip
- * @returns A TransformStream that skips the specified number of chunks
- * @example
- * ```ts
- * const stream = readable.pipeThrough(skip(2));
- * // The first 2 chunks will be skipped
- * ```
- */
-export function skip<T>(count: number): TransformStream<T, T> {
-  let skipped = 0
-
-  return new TransformStream({
-    transform(chunk, controller) {
-      if (skipped < count) {
-        skipped++
-        return
-      }
-
-      controller.enqueue(chunk)
-    }
-  })
-}
-
-/**
- * Merge multiple streams into a single stream
- *
- * @category Combination
- * @param streams - The streams to merge
- * @returns A ReadableStream that emits chunks from all input streams
- * @example
- * ```ts
- * const mergedStream = merge(stream1, stream2, stream3);
- * ```
- */
-export function merge<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
-  return new ReadableStream<T>({
-    async start(controller) {
-      try {
-        await Promise.all(
-          streams.map(async stream => {
-            const reader = stream.getReader()
-            try {
-              while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
-                controller.enqueue(value)
-              }
-            } finally {
-              reader.releaseLock()
-            }
-          })
-        )
-        controller.close()
-      } catch (error) {
-        controller.error(error)
-      }
     }
   })
 }
@@ -369,6 +208,64 @@ export function interval(period: number): ReadableStream<number> {
 }
 
 /**
+ * Map function for transforming stream chunks
+ *
+ * @category Transformation
+ * @param fn - The transformation function to apply to each chunk
+ * @returns A TransformStream that applies the transformation
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(map(x => x * 2));
+ * ```
+ */
+export function map<T, R>(
+  fn: (chunk: T) => SyncOrAsync<R>
+): TransformStream<T, R> {
+  return new TransformStream({
+    async transform(chunk, controller) {
+      controller.enqueue(await fn(chunk))
+    }
+  })
+}
+
+/**
+ * Merge multiple streams into a single stream
+ *
+ * @category Combination
+ * @param streams - The streams to merge
+ * @returns A ReadableStream that emits chunks from all input streams
+ * @example
+ * ```ts
+ * const mergedStream = merge(stream1, stream2, stream3);
+ * ```
+ */
+export function merge<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
+  return new ReadableStream<T>({
+    async start(controller) {
+      try {
+        await Promise.all(
+          streams.map(async stream => {
+            const reader = stream.getReader()
+            try {
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                controller.enqueue(value)
+              }
+            } finally {
+              reader.releaseLock()
+            }
+          })
+        )
+        controller.close()
+      } catch (error) {
+        controller.error(error)
+      }
+    }
+  })
+}
+
+/**
  * Create a TransformStream that reduces all values to a single value
  *
  * @category Transformation
@@ -425,4 +322,106 @@ export function scan<T, R>(
       controller.enqueue(accumulator)
     }
   })
+}
+
+/**
+ * Skip a number of chunks from the beginning of a stream
+ *
+ * @category Transformation
+ * @param count - The number of chunks to skip
+ * @returns A TransformStream that skips the specified number of chunks
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(skip(2));
+ * // The first 2 chunks will be skipped
+ * ```
+ */
+export function skip<T>(count: number): TransformStream<T, T> {
+  let skipped = 0
+
+  return new TransformStream({
+    transform(chunk, controller) {
+      if (skipped < count) {
+        skipped++
+        return
+      }
+
+      controller.enqueue(chunk)
+    }
+  })
+}
+
+/**
+ * Tap function for side effects without modifying the stream
+ *
+ * @category Transformation
+ * @param fn - The function to execute for each chunk (for side effects)
+ * @returns A TransformStream that passes chunks unchanged after executing the function
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(tap(x => console.log(`Processing: ${x}`)));
+ * ```
+ */
+export function tap<T>(
+  fn: (chunk: T) => SyncOrAsync<void>
+): TransformStream<T, T> {
+  return new TransformStream({
+    async transform(chunk, controller) {
+      await fn(chunk)
+      controller.enqueue(chunk)
+    }
+  })
+}
+
+/**
+ * Limit the number of chunks from a stream
+ *
+ * @category Transformation
+ * @param limit - The maximum number of chunks to pass through
+ * @returns A TransformStream that limits the number of chunks
+ * @example
+ * ```ts
+ * const stream = readable.pipeThrough(take(3));
+ * // Only the first 3 chunks will pass through
+ * ```
+ */
+export function take<T>(limit: number): TransformStream<T, T> {
+  let count = 0
+
+  return new TransformStream({
+    transform(chunk, controller) {
+      if (count < limit) {
+        controller.enqueue(chunk)
+        count++
+      }
+
+      if (count >= limit) {
+        controller.terminate()
+      }
+    }
+  })
+}
+
+/**
+ * Collect all stream chunks into an array
+ *
+ * @category Consumption
+ * @param stream - The readable stream to collect
+ * @returns A promise that resolves to an array of all chunks
+ * @example
+ * ```ts
+ * const result = await toArray(readable);
+ * console.log(result); // [1, 2, 3, ...]
+ * ```
+ */
+export async function toArray<T>(stream: ReadableStream<T>): Promise<T[]> {
+  const array: T[] = []
+  await stream.pipeTo(
+    new WritableStream<T>({
+      write(chunk: T) {
+        array.push(chunk)
+      }
+    })
+  )
+  return array
 }
