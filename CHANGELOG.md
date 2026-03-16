@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Falinor/web-streams-utils/compare/v1.0.0...v1.1.0) (2026-03-16)
+
+
+### Features
+
+* update docs; force next minor version ([22036b5](https://github.com/Falinor/web-streams-utils/commit/22036b5fb3786f0864fd281618264fce3ec5d697))
+
 # [1.0.0](https://github.com/Falinor/web-streams-utils/compare/v0.3.0...v1.0.0) (2025-05-18)
 
 
