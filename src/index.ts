@@ -114,7 +114,7 @@ export function filter<T>(
  * @returns A TransformStream that applies the transformation and flattens the result
  * @example
  * ```ts
- * const stream = readable.pipeThrough(flatMap(word => word.split(''));
+ * const stream = readable.pipeThrough(flatMap(word => word.split('')));
  * ```
  */
 export function flatMap<T, R>(

@@ -73,16 +73,16 @@ example()
 - `scan<T, R>(scanner: (accumulator: R, chunk: T) => R | Promise<R>, initialValue: R): TransformStream<T, R>`
 - `compact<T>(): TransformStream<T, NonNullable<T>>`
 - `flatMap<T, R>(fn: (chunk: T) => R[] | Promise<R[]>): TransformStream<T, R>`
-- `reduce<T>(reducer: (accumulator: T, chunk: T) => T | Promise<T>): TransformStream<T, T>`
+- `reduce<T, R>(reducer: (accumulator: R, chunk: T) => R | Promise<R>, initialValue: R): TransformStream<T, R>`
 
 ### Stream Creation
 
 - `fromIterable<T>(iterable: Iterable<T> | AsyncIterable<T>): ReadableStream<T>`
-- `interval(period: number): ReadableStream<number>`
+- `interval(period: number): ReadableStream<number>` — cancel the stream to stop the underlying interval and avoid resource leaks
 
 ### Stream Combination
 
-- `merge<T>(...streams: ReadableStream<T>[]): ReadableStream<T>`
+- `merge<T>(...streams: ReadableStream<T>[]): ReadableStream<T>` — chunks from all streams are interleaved in the order they are read (non-deterministic output order)
 
 ### Consumption
 
@@ -152,7 +152,7 @@ The release process requires the following GitHub secrets to be set:
 
 ## Browser Support
 
-This library supports all modern browsers and Node.js 16+. It uses the Web
+This library supports all modern browsers and Node.js 22+. It uses the Web
 Streams API, which is available in all modern browsers and Node.js.
 
 ## License
